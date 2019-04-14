@@ -1,0 +1,90 @@
+---
+title: "Mundiales de Futbol - Datos de Miercoles"
+author: "Agustin Solano"
+date: "13 de abril de 2019"
+output: pdf_document
+---
+
+Librerias a utilizar
+```{r}
+library(readr)
+library(stringr)
+library(ggplot2)
+```
+
+
+Levanto los datos provistos
+```{r}
+# install.packages(readr)
+
+partidos_fifa_copa_mundial_procesado <- readr::read_delim("partidos.txt",delim = "\t")
+
+partidos_fifa_copa_mundial_crudo <- readr::read_delim("partidos_crudo.txt",delim = "\t")
+```
+
+Pregunta 1: quien es el equipo que mas partidos gano en mundiales y quien es el que tiene mayor proporciones de partidos ganados?
+```{r}
+#lista total de equipos que jugaron en algun mundial
+paises = c(partidos_fifa_copa_mundial_procesado$equipo_1,partidos_fifa_copa_mundial_procesado$equipo_2)
+
+listaPaises = unique(paises)
+listaPaises = listaPaises[listaPaises!="Republica de Irlanda"&listaPaises!="Irlanda del Norte"&
+                  listaPaises!="Alemania occidental"&listaPaises!="Alemania del Este"&
+                  listaPaises!="Serbia y Montenegro"]
+
+cantPartidosPais = data.frame()
+for (i in 1:length(listaPaises))
+{
+  cant = sum(str_count(paises,listaPaises[i]))
+  aux=data.frame(pais=listaPaises[i],cant=cant)
+  cantPartidosPais = rbind(cantPartidosPais,aux)
+  
+}
+
+
+ganaEquipo1 = partidos_fifa_copa_mundial_procesado$equipo_1_final>partidos_fifa_copa_mundial_procesado$equipo_2_final
+ganaEquipo2 = partidos_fifa_copa_mundial_procesado$equipo_2_final>partidos_fifa_copa_mundial_procesado$equipo_1_final
+
+#equipos que ganaron algun partido
+equiposGanadores = c(partidos_fifa_copa_mundial_procesado$equipo_1[ganaEquipo1],partidos_fifa_copa_mundial_procesado$equipo_2[ganaEquipo2])
+
+listaPaisesGanadores=unique(equiposGanadores)
+listaPaisesGanadores = listaPaisesGanadores[listaPaisesGanadores!="Republica de Irlanda"&
+                                              listaPaisesGanadores!="Irlanda del Norte"&
+                  listaPaisesGanadores!="Alemania occidental"&listaPaisesGanadores!="Alemania del Este"&
+                  listaPaisesGanadores!="Serbia y Montenegro"]
+
+ganadores=data.frame()
+for (i in 1:length(listaPaisesGanadores))
+{
+  
+  cant = sum(str_count(equiposGanadores,listaPaisesGanadores[i]))
+  aux=data.frame(pais=listaPaisesGanadores[i],cantGanados=cant,
+                 cantJugados=cantPartidosPais$cant[str_detect(cantPartidosPais$pais,listaPaisesGanadores[i])])
+  ganadores=rbind(ganadores,aux)
+
+}
+ganadores$porcGanados = ganadores$cantGanados/ganadores$cantJugados*100
+
+```
+
+Grafico
+```{r}
+#Voy a ordenar los datos de mayor a menor cantidad de partidos ganados
+ganadores$pais = factor(ganadores$pais,levels=ganadores$pais[order(ganadores$cantGanados,decreasing=F)]) 
+
+ggplot(data=ganadores,aes(x=pais,y=cantGanados)) +
+  geom_col() +
+  theme_light() +
+  coord_flip()
+  #theme(axis.text.x = element_text(face = "bold", color = "#993333", angle = 45))
+
+#Voy a ordenar los datos de mayor a menor porcentaje de partidos ganados
+ganadores$pais = factor(ganadores$pais,levels=ganadores$pais[order(ganadores$porcGanados,decreasing=F)]) 
+
+ggplot(data=ganadores,aes(x=pais,y=porcGanados)) +
+  geom_col() +
+  theme_light() +
+  coord_flip()
+```
+
