@@ -68,23 +68,51 @@ ganadores$porcGanados = ganadores$cantGanados/ganadores$cantJugados*100
 
 ```
 
+Voy a agregar un factor para indicar los paises que ganaron al menos un mundial. Saco los datos de:
+https://es.digitaltrends.com/deportes/paises-campeones-copa-mundial-fifa/
+```{r}
+ganadores$ganoMundial = ganadores$pais=="Brasil"|ganadores$pais=="Italia"|ganadores$pais=="Alemania"|
+                        ganadores$pais=="Uruguay"|ganadores$pais=="Argentina"|ganadores$pais=="Inglaterra"|
+                        ganadores$pais=="Francia"|ganadores$pais=="España"
+```
+
+
+
 Grafico
 ```{r}
 #Voy a ordenar los datos de mayor a menor cantidad de partidos ganados
 ganadores$pais = factor(ganadores$pais,levels=ganadores$pais[order(ganadores$cantGanados,decreasing=F)]) 
 
-ggplot(data=ganadores,aes(x=pais,y=cantGanados)) +
+ggplot(data=ganadores,aes(x=pais,y=cantGanados,fill=ganoMundial)) +
   geom_col() +
+  #scale_fill_brewer(palette="Pastel2")+
+  scale_fill_manual(values=c("tomato","cornflowerblue"),name = "Ganó algún mundial?", labels = c("No", "Si"))+
+  ggtitle("Cantidad de partidos ganados por pais")+
   theme_light() +
+  theme(axis.text.y=element_text(size=5))+
   coord_flip()
-  #theme(axis.text.x = element_text(face = "bold", color = "#993333", angle = 45))
+ggsave("equiposMasPartidosGanados.png",plot = last_plot())
 
 #Voy a ordenar los datos de mayor a menor porcentaje de partidos ganados
 ganadores$pais = factor(ganadores$pais,levels=ganadores$pais[order(ganadores$porcGanados,decreasing=F)]) 
 
-ggplot(data=ganadores,aes(x=pais,y=porcGanados)) +
+ggplot(data=ganadores,aes(x=pais,y=porcGanados,fill=ganoMundial)) +
   geom_col() +
+  scale_fill_manual(values=c("tomato","cornflowerblue"),name = "Ganó algún mundial?", labels = c("No", "Si"))+
+  ggtitle("Porcentaje de partidos ganados por pais")+
   theme_light() +
+  theme(axis.text.y=element_text(size=5))+
+  ylim(0,100) +
   coord_flip()
+ggsave("equiposMasGanadores.png",plot = last_plot())
+
+ggplot(data=ganadores[order(ganadores$porcGanados,decreasing=T)[1:20],],aes(x=pais,y=porcGanados,fill=ganoMundial)) +
+  geom_col() +
+  scale_fill_manual(values=c("tomato","cornflowerblue"),name = "Ganó algún mundial?", labels = c("No", "Si"))+
+  ggtitle("Porcentaje de partidos ganados por pais (20 mas ganadores)")+
+  theme_light() +
+  ylim(0,100) +
+  coord_flip()
+ggsave("20equiposMasGanadores.png",plot = last_plot())
 ```
 
