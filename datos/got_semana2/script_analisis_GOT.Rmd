@@ -1,0 +1,116 @@
+---
+title: "DatosDeMiercoles Semana2 - GOT"
+author: "Agustin Solano"
+date: "17 de abril de 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Librerias a utilizar
+```{r}
+library(readr)
+library(stringr)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+#library(purrr)
+```
+
+Levanto los datos provistos
+```{r}
+#tiempo_pantalla <- readr::read_csv("https://raw.githubusercontent.com/cienciadedatos/datos-de-miercoles/master/datos/2019/2019-04-17/tiempo_pantalla.csv")
+
+#cambio_lealtades <- readr::read_csv("https://raw.githubusercontent.com/cienciadedatos/datos-de-miercoles/master/datos/2019/2019-04-17/cambio_lealtades.csv")
+cambio_lealtades <- readr::read_csv("cambio_lealtades.csv")
+
+#personajes_libros <- readr::read_csv("https://raw.githubusercontent.com/cienciadedatos/datos-de-miercoles/master/datos/2019/2019-04-17/personajes_libro.csv")
+personajes_libros <- readr::read_csv("personajes_libro.csv")
+```
+
+Funciones necesarias
+```{r}
+cuentaLealtadesXtemp = function(dataset,nomTemp)
+{
+  aux = dataset %>%
+    group_by_(nomTemp) %>%
+    tally()
+
+  aux=aux %>% mutate(temporada=rep(nomTemp,nrow(aux)))
+  aux
+}
+
+```
+
+Preguntas posibles:
+-Los personales menos leales son los que aparecen mas o tiene mas exposicion?
+-que casas tuvieron mas adeptos en cada temporada 
+
+```{r}
+temporadas=c("lealtad_inicial","fin_t1","fin_t2","fin_t3","fin_t4","fin_t5","fin_t6","fin_t7")
+lealtadasXcasa = data.frame() #contiene las lealtades de cada casa por temporada
+for (t in 1:length(temporadas)){
+  aux = cuentaLealtadesXtemp(cambio_lealtades,temporadas[t])
+  colnames(aux)=c("casa","n","temporada")
+  lealtadasXcasa = rbind(lealtadasXcasa,aux)
+}
+
+lealtadasXcasa$casa = as.factor(lealtadasXcasa$casa)
+lealtadasXcasa$temporada = factor(lealtadasXcasa$temporada,levels=temporadas)
+
+#Me quedo solo con las casas mas importantes
+lealtadasXcasa = lealtadasXcasa %>%
+   filter(casa=="Rey Joffrey Baratheon"|casa=="Guardia de la Noche"|casa=="Daenerys Targaryen"|casa=="Rey Robert Baratheon"|casa=="Salvajes"|casa=="Robb Stark, Rey del Norte"|casa=="Rey Tommen Baratheon"|casa=="Esclavistas de Essos"|casa=="Caminantes Blancos"|casa=="Dothraki"|casa=="Reina Cersei Lannister"|casa=="Jon Nieve, Rey del Norte"|
+casa=="Roose Bolton, Lord Guardián del Norte"|casa=="Rey Renly Baratheon"|casa=="Rey Stannis Baratheon")
+
+casasConMasLeales=lealtadasXcasa %>% group_by(temporada) %>% summarise(maximos=max(n),casaMax=casa[which(n == max(n))])
+casasConMasLeales$temporada = factor(casasConMasLeales$temporada,levels=temporadas)
+```
+
+Graficas
+```{r}
+ ggplot(lealtadasXcasa,aes(x=temporada,y=n,fill=casa,color=casa,group=casa)) +
+   geom_point(aes(size=n)) + geom_line() +
+  guides(size=F) +
+  theme_light()
+# 
+# ggplot(lealtadasXcasa,aes(x=casa,y=n,fill=casa,color=casa,group=casa)) +
+#   geom_point(aes(size=n)) + geom_line() +
+#   facet_grid(~temporada)
+
+ggplot(casasConMasLeales,aes(x=temporada,y=maximos,color=casaMax))+
+  geom_point(size=10) +
+  geom_vline(xintercept=1:8) +
+  ylim(0,250) +
+  scale_x_discrete(labels=c("Inicio Temp1","Fin Temp1","Fin Temp2","Fin Temp3",
+                            "Fin Temp4","Fin Temp5","Fin Temp6","Fin Temp7"))+
+  ggtitle("Líderes con más lealtades")+
+  scale_color_brewer(palette = "GnBu",name="Lider") +
+  theme_classic() + theme(axis.title = element_blank(),
+        axis.ticks.y = element_blank(),axis.ticks.x = element_blank(),
+        axis.line = element_blank(),axis.text.x = element_text(angle = -45)) 
+ggsave("casasConMasLealtadesXtemporada.png",plot = last_plot())
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
