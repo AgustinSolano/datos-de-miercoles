@@ -90,7 +90,8 @@ ggplot(casasConMasLeales,aes(x=temporada,y=maximos,color=casaMax))+
   scale_color_brewer(palette = "GnBu",name="Lider") +
   theme_classic() + theme(axis.title = element_blank(),
         axis.ticks.y = element_blank(),axis.ticks.x = element_blank(),
-        axis.line = element_blank(),axis.text.x = element_text(angle = -45)) 
+        axis.line = element_blank(),axis.text.x = element_text(angle = -45),
+        plot.title = element_text(size = 20, face = "bold",hjust=0.5)) 
 ggsave("casasConMasLealtadesXtemporada.png",plot = last_plot())
 ```
 
