@@ -1,0 +1,101 @@
+---
+title: '#DatosDeMiercoles semana 24-04-19'
+author: "Agustin Solano"
+date: "27/4/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Librerias necesarias
+```{r}
+library(plyr)
+library(dplyr)
+library(ggplot2)
+```
+
+
+Levanto Datos
+```{r}
+gapminder = read.csv("gapminder_es.csv")
+```
+
+```{r}
+aux=gapminder %>%
+  filter(continente=="Americas")
+
+cambioMedidas = gapminder %>%
+  group_by(pais,continente) %>%
+  summarise(deltaEsperanza = esperanza_de_vida[length(esperanza_de_vida)]-esperanza_de_vida[1],
+            deltaPIB = pib_per_capita[length(pib_per_capita)]-pib_per_capita[1])
+
+mediasXcontinenteXanio = gapminder %>%
+  group_by(anio,continente) %>%
+  summarise(mediaPIB = mean(pib_per_capita,na.rm = T),
+            sdPIB = sd(pib_per_capita,na.rm = T),
+            mediaEsperanza = mean(esperanza_de_vida,na.rm = T),
+            sdEsperanza = sd(esperanza_de_vida,na.rm = T))
+
+```
+
+Correlaciones
+```{r}
+ggplot(mediasXcontinenteXanio,aes(x=mediaPIB/1000,y=mediaEsperanza,group=continente)) +
+  geom_point(size=2.5) +
+  geom_smooth(aes(colour=continente),method='lm',se=F,size=1.5) +
+  facet_grid(~continente) +
+  xlab("PIB per capita [x1000]") + ylab("Esperanza de Vida") +
+  ggtitle("Valores Medios por Año") +
+  scale_color_brewer(palette = "Pastel1") +
+  theme_light() +
+  theme(panel.grid.minor = element_blank())
+ggsave(filename = "PIBVsesperanza_Xcontiente.png")
+
+ggplot(mediasXcontinenteXanio,aes(x=anio,y=mediaPIB)) +
+  geom_point(size=2.5) +
+  geom_smooth(aes(colour=continente),method='lm',se=F,size=1.5) +
+  geom_ribbon(aes(ymin = mediaPIB-sdPIB, ymax = mediaPIB+sdPIB),alpha=.2) +
+  facet_grid(~continente) +
+  xlab("Anio") + ylab("PIB per capita") +
+  ggtitle("Valores Medios por Año [Media +- SD]") +
+  scale_color_brewer(palette = "Pastel1") +
+  theme_light() +
+  theme(panel.grid.minor = element_blank(),axis.text.x=element_text(size=5))
+ggsave(filename = "PIBVsAnio_Xcontiente.png")
+
+
+ggplot(mediasXcontinenteXanio,aes(x=anio,y=mediaEsperanza)) +
+  geom_point(size=2.5) +
+  geom_smooth(aes(colour=continente),method='lm',se=F,size=1.5) +
+  geom_ribbon(aes(ymin = mediaEsperanza-sdEsperanza, ymax = mediaEsperanza+sdEsperanza),alpha=.2) +
+  facet_grid(~continente) +
+  xlab("Anio") + ylab("Esperanza de Vida") +
+  ggtitle("Valores Medios por Año [Media +- SD]") +
+  scale_color_brewer(palette = "Pastel1") +
+  theme_light() +
+  theme(panel.grid.minor = element_blank(),axis.text.x=element_text(size=5))
+ggsave(filename = "esperanzaVsAnio_Xcontiente.png")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
