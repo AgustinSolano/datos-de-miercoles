@@ -1,0 +1,86 @@
+---
+title: "Comercio Mundial - Datos de Miercoles"
+author: "Agustin Solano"
+date: "5/5/2019"
+output: pdf_document
+---
+
+Librerias necesarias
+```{r}
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+
+Levanto Datos
+```{r}
+datosComercio = read.csv("comercio_hispanoamerica_mundo_agregado.csv")
+```
+
+Estudio de la Blanza comercial argentina entre 2013 y 2017
+Cada fila tiene los datos de exportacion e importacion en dolares para cada relaicon comercial con cada paise, por lo que me voy a quedar solo con los dato para los cuales Argentina es el pais de origen
+```{r}
+datosArg =  datosComercio %>%
+  filter(nombre_pais_origen=="Argentina") %>%
+  group_by(nombre_comunidad_producto,anio) %>%
+  summarise(montoExportaciones=sum(valor_exportado_dolares)/1000000,montoImportaciones=sum(valor_importado_dolares)/1000000) %>%
+  mutate(balanzaComercial = montoExportaciones-montoImportaciones)
+
+datosArgLong = datosArg %>%
+    select(-balanzaComercial) %>%
+    gather(key="tipoTransaccion",value="valorDolares",-nombre_comunidad_producto,-anio)
+
+```
+
+
+```{r}
+#Me quedo con algunos producto caracteristicos
+datosArgLongSelect = datosArgLong %>%filter(nombre_comunidad_producto=="Alimentos"|
+nombre_comunidad_producto=="Maquinaria"|nombre_comunidad_producto=="Productos Minerales"|
+  nombre_comunidad_producto=="Productos QuÃmicos"|nombre_comunidad_producto=="Productos Vegetales"|
+  nombre_comunidad_producto=="Transporte")
+datosArgSelect = datosArg %>%filter(nombre_comunidad_producto=="Alimentos"|
+nombre_comunidad_producto=="Maquinaria"|nombre_comunidad_producto=="Productos Minerales"|
+  nombre_comunidad_producto=="Productos QuÃmicos"|nombre_comunidad_producto=="Productos Vegetales"|
+  nombre_comunidad_producto=="Transporte")
+
+datoArgGlobales = datosArgSelect%>%
+  group_by(anio)%>%
+  summarise(balanzaGlobal=sum(balanzaComercial)) %>%
+  mutate(signo=ifelse(balanzaGlobal>=0,1,0))
+
+ggplot(datosArgLongSelect) + 
+  geom_col(aes(x=anio,y=valorDolares,fill=tipoTransaccion),position="dodge2") +
+  facet_grid(.~nombre_comunidad_producto)
+
+ggplot(datosArgSelect,aes(x=anio,y=balanzaComercial)) +
+  geom_col(data=datoArgGlobales,aes(x=anio,y=balanzaGlobal,fill=factor(signo)),color="black",alpha=.15,width=.5) +
+  geom_line(aes(group=nombre_comunidad_producto),color="azure2",size=1.2) +
+  geom_point(aes(color=nombre_comunidad_producto),size=5) + #,shape=nombre_comunidad_producto 
+  scale_color_brewer(palette = "Set2",name="Tipos de Productos") +
+  scale_fill_manual(values = c("red","blue") )+
+  geom_hline(yintercept = 0) +
+  ggtitle("Balanza comercial de productos seleccionador y tendencia global")+
+  xlab("Año") + ylab("Valor en Millones de Dólares")
+  guides(fill=F) +theme_light() 
+
+# ggplot() +
+#   geom_col(data=datoArgGlobales,aes(x=anio,y=balanzaGlobal),width = 2)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
