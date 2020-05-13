@@ -1,0 +1,53 @@
+---
+title: "Untitled"
+author: "Bioing. Agustin Solano"
+date: "12/5/2020"
+output: pdf_document
+---
+
+
+Levanto librerias necesarias
+```{r}
+if("dplyr" %in% (.packages())){
+          detach("package:dplyr", unload=TRUE) 
+          detach("package:plyr", unload=TRUE) 
+} 
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(viridis)
+
+```
+
+
+
+```{r }
+datos = read.csv('registro-de-femicidios-20200109.csv',na.strings = "")
+str(datos)
+```
+
+```{r}
+datosFilt = datos %>%
+  separate(hecho_fecha,c("anio"),sep="-",remove=F) %>%
+  filter((!is.na(victima_identidad_genero))&victima_identidad_genero!="HOMBRE") %>%
+  filter((!is.na(hecho_provincia))&(!is.na(anio))) %>%
+  mutate(prov = if_else(hecho_provincia == "Ciudad AutÃ³noma de Bs.As."|hecho_provincia =="CÃ³rdoba"|
+                    hecho_provincia =="Buenos Aires"|hecho_provincia =="Mendoza"|hecho_provincia =="Santa Fe",as.character(hecho_provincia),"Otra")) %>%
+  filter(anio > 2009)
+```
+
+
+```{r}
+ggplot(data=datosFilt,aes(x=factor(anio))) +
+  geom_bar(aes(fill=prov),position="stack") +
+  #scale_fill_brewer(palette="Paired",labels=c("BsAs","Cordoba","CABA","Mendoza","Otra","Santa Fe"),
+  #                  name = "Distrito") +
+  scale_fill_viridis(discrete = TRUE,labels=c("BsAs","Cordoba","CABA","Mendoza","Otra","Santa Fe"),
+                    name = "Distrito") +
+  ylab("Número de Casos") + xlab("Año") +
+  ggtitle("Cantidad de Femicidos por Distrito") +
+  theme_classic() +
+  theme(legend.position="bottom") 
+```
+
