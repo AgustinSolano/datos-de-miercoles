@@ -17,10 +17,7 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(viridis)
-
 ```
-
-
 
 ```{r }
 datos = read.csv('registro-de-femicidios-20200109.csv',na.strings = "")
@@ -39,9 +36,9 @@ datosFilt = datos %>%
 
 
 ```{r}
-ggplot(data=datosFilt,aes(x=factor(anio))) +
+g = ggplot(data=datosFilt,aes(x=factor(anio))) +
   geom_bar(aes(fill=prov),position="stack") +
-  #scale_fill_brewer(palette="Paired",labels=c("BsAs","Cordoba","CABA","Mendoza","Otra","Santa Fe"),
+  # scale_fill_brewer(palette="Set2",labels=c("BsAs","Cordoba","CABA","Mendoza","Otra","Santa Fe"),
   #                  name = "Distrito") +
   scale_fill_viridis(discrete = TRUE,labels=c("BsAs","Cordoba","CABA","Mendoza","Otra","Santa Fe"),
                     name = "Distrito") +
@@ -49,5 +46,9 @@ ggplot(data=datosFilt,aes(x=factor(anio))) +
   ggtitle("Cantidad de Femicidos por Distrito") +
   theme_classic() +
   theme(legend.position="bottom") 
+g
+```
+```{r}
+ggsave("Dia1.png",plot=g,units = 'mm',dpi=300)
 ```
 

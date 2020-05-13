@@ -1,0 +1,54 @@
+---
+title: "Untitled"
+author: "Bioing. Agustin Solano"
+date: "13/5/2020"
+output: pdf_document
+---
+
+
+Levanto librerias necesarias
+```{r}
+if("dplyr" %in% (.packages())){
+          detach("package:dplyr", unload=TRUE) 
+          detach("package:plyr", unload=TRUE) 
+} 
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(viridis)
+```
+
+```{r }
+datos = read.csv('GoogleTrends_yoga_cerveceria_90diasArge.csv',na.strings = "")
+colnames(datos) = c("Dia","Yoga","Cerveceria")
+str(datos)
+```
+
+```{r}
+datosProc = datos %>%
+  #mutate(YogaNorm = Yoga/max(Yoga), CerveceriaNorm = Cerveceria/max(Cerveceria)) %>%
+  mutate(Dia = as.Date(datos$Dia,format='%Y-%m-%d')) %>%
+  mutate(diaSem = weekdays(Dia), mes = months(Dia), numDia = as.numeric(format(Dia,format='%d'))) %>%
+  pivot_longer(cols=Yoga:Cerveceria,names_to = "Item",values_to = "Valor") 
+datosProc
+```
+
+
+```{r}
+# g = ggplot() +
+#   geom_line(data=datosProc,aes(x=1:87,y=YogaNorm)) +
+#   geom_line(data=datosProc,aes(x=1:87,y=CerveceriaNorm)) +
+#   
+g = ggplot() +
+  geom_line(data=datosProc,aes(x=Dia,y=Valor,color=Item),size=1.3) +
+  xlab("Fecha") + ylab("Busquedas en Google") +
+  theme_classic()
+
+g
+```
+
+```{r}
+ggsave("Dia1.png",plot=g,units = 'mm',dpi=300)
+```
+
