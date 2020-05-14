@@ -16,7 +16,6 @@ library(plyr)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
-library(viridis)
 ```
 
 ```{r }
@@ -27,7 +26,6 @@ str(datos)
 
 ```{r}
 datosProc = datos %>%
-  #mutate(YogaNorm = Yoga/max(Yoga), CerveceriaNorm = Cerveceria/max(Cerveceria)) %>%
   mutate(Dia = as.Date(datos$Dia,format='%Y-%m-%d')) %>%
   mutate(diaSem = weekdays(Dia), mes = months(Dia), numDia = as.numeric(format(Dia,format='%d'))) %>%
   pivot_longer(cols=Yoga:Cerveceria,names_to = "Item",values_to = "Valor") 
@@ -36,19 +34,29 @@ datosProc
 
 
 ```{r}
-# g = ggplot() +
-#   geom_line(data=datosProc,aes(x=1:87,y=YogaNorm)) +
-#   geom_line(data=datosProc,aes(x=1:87,y=CerveceriaNorm)) +
-#   
-g = ggplot() +
-  geom_line(data=datosProc,aes(x=Dia,y=Valor,color=Item),size=1.3) +
-  xlab("Fecha") + ylab("Busquedas en Google") +
-  theme_classic()
 
+g = ggplot() +
+  geom_rect(data=datosProc,aes(xmin = as.Date("2020-03-12"),xmax = as.Date("2020-05-09"),
+                               ymin = -Inf, ymax = Inf),
+                   fill = "mistyrose", alpha = 0.07) +   
+  geom_line(data=datosProc,aes(x=Dia,y=Valor,color=Item),size=1.3) +
+  scale_color_manual(labels=c("Cervecerias","Yoga"),values = c("#518EFF","#B48CFC"),
+                    name = NULL) +
+  geom_vline(xintercept = as.Date("2020-03-12"), linetype="dashed") +
+  xlab("Fecha") + ylab("Búsquedas en Google") +
+  annotate("text", x = as.Date("2020-04-20"), y = 100, label = "Cuarentena Obligatoria", size=5) +
+  annotate("text", x = as.Date("2020-02-25"), y = 100, label = "Éramos Felices", size=5) +
+  annotate("text", x = as.Date("2020-02-20"), y = 1, label = "@Aguchosolano", size=3) +
+  annotate("text", x = as.Date("2020-03-12"), y = -1, label = "Inicio Cuarentena", size=3,
+           fontface = "bold") +
+  scale_x_date(expand = c(0,0)) +
+  theme_light() +
+  theme(legend.position="top", axis.title.y = element_text(size=15),
+        legend.title = element_text(size=15),text = element_text(size=15)) 
 g
 ```
 
 ```{r}
-ggsave("Dia1.png",plot=g,units = 'mm',dpi=300)
+ggsave("Dia2.png",plot=g,units = 'mm',dpi=300)
 ```
 

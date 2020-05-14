@@ -1,0 +1,73 @@
+---
+title: "Untitled"
+author: "Bioing. Agustin Solano"
+date: "13/5/2020"
+output: pdf_document
+---
+
+
+Levanto librerias necesarias
+```{r}
+if("dplyr" %in% (.packages())){
+          detach("package:dplyr", unload=TRUE) 
+          detach("package:plyr", unload=TRUE) 
+} 
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(png)
+library(grid)
+```
+
+```{r }
+datos = read.csv('avocado.csv',na.strings = "")
+str(datos)
+```
+
+```{r}
+datosProc = datos %>%
+   mutate(Date = as.Date(datos$Date,format='%Y-%m-%d')) %>%
+   mutate(anio = as.numeric(format(Date,format='%Y')), 
+                                     mes = months(Date), 
+                                     numDia = as.numeric(format(Date,format='%d'))) #%>%
+datosProc
+```
+
+Levanto imagen
+```{r}
+imagen = readPNG("avocado.png")
+imagen_grid <- rasterGrob(imagen, interpolate=TRUE)
+```
+
+```{r}
+g1 = ggplot() +
+  geom_point(data=datosMean,aes(x=anio,y=mediaPrecio,color=type,size=volumenMedio)) +
+  scale_size(range = c(3, 15), name="Population (M)") +
+  ylim(0.5,2.5)
+g1
+
+g2 = ggplot() +
+  geom_point(data=datosProc %>%filter(region == "California"), #NewYork
+             aes(x=Date,y=AveragePrice,size=Total.Bags,fill=type),colour="black",shape = 21) +
+  scale_size(range = c(0.5, 10), name="Cantidad de Bolsas") +
+  scale_fill_manual(values = c("#356211","#F2E880"), labels=c("Convencional","Organica"),
+                    name="Tipo de Palta") +
+  ylim(0.5,2.5) +
+  xlab("Fecha") + ylab("Precio Promedio (US$)") +
+  ggtitle("Venta de Palta en California") +
+  annotation_custom(imagen_grid, xmin=-Inf, xmax=as.Date("2015-05-31"), ymin=2.0, ymax=2.5) +
+  theme_minimal() +
+  theme(panel.background = element_rect(fill = "#e4e4a8",# "#D8D881",
+                                colour = "#D8D881",
+                                size = 0.5, linetype = "solid"),
+        plot.title = element_text(color="Black", size=14, face="bold"),
+        aspect.ratio = 1/2)
+g2
+
+```
+
+```{r}
+ggsave("Dia3.png",plot=g2,units = 'mm',dpi=300)
+```
+
