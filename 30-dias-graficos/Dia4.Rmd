@@ -1,0 +1,78 @@
+---
+title: "Dia 4"
+author: "Bioing. Agustin Solano"
+date: "15/5/2020"
+output: pdf_document
+---
+
+
+Levanto librerias necesarias
+```{r}
+if("dplyr" %in% (.packages())){
+          detach("package:dplyr", unload=TRUE) 
+          detach("package:plyr", unload=TRUE) 
+} 
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(png)
+library(grid)
+```
+
+```{r }
+datos = read.csv('Global_Mobility_Report.csv',na.strings = "")
+str(datos)
+```
+
+```{r}
+datosProc = datos %>%
+   mutate(date = as.Date(date,format='%Y-%m-%d'),anio = as.numeric(format(date,format='%Y')), 
+                                     mes = months(date), 
+                                     numDia = as.numeric(format(date,format='%d')),
+          numWeek = as.numeric(format(date,format='%V'))) %>%
+   filter(country_region=="Argentina") %>%
+   select(-country_region_code,-sub_region_1,-sub_region_2) %>%
+  pivot_longer(cols=retail_and_recreation_percent_change_from_baseline:residential_percent_change_from_baseline,
+               names_to = "Location", values_to = "Permanencia")
+datosProc
+
+datosMeanWeek = datosProc %>%
+  group_by(country_region,numWeek,Location) %>%
+  summarise(meanPermanencia = mean(Permanencia,na.rm=T),sdPermanencia = sd(Permanencia,na.rm=T))
+datosMeanWeek
+```
+
+
+
+```{r}
+etiquetas.facets = c(grocery_and_pharmacy_percent_change_from_baseline="Comercios Alimentos", 
+                     parks_percent_change_from_baseline="Parques",
+                     residential_percent_change_from_baseline="Residencial", 
+                     retail_and_recreation_percent_change_from_baseline="Recreacion",
+                     transit_stations_percent_change_from_baseline="Estaciones Transporte", 
+                     workplaces_percent_change_from_baseline="Lugares de Trabajo")
+
+g = ggplot() +
+  geom_line(data=datosMeanWeek, 
+             aes(x=numWeek,y=meanPermanencia)) +
+  geom_ribbon(data=datosMeanWeek,
+              aes(x=numWeek,ymin=meanPermanencia-sdPermanencia,ymax=meanPermanencia+sdPermanencia,fill=Location),
+              alpha=0.2) +
+  facet_wrap(~Location, strip.position = "bottom", labeller = labeller(Location=etiquetas.facets)) +
+  geom_vline(xintercept = 11, linetype="dashed") +
+  scale_fill_brewer(palette = "Spectral") + 
+  guides(fill=F) + xlab(NULL) + ylab(NULL) + ggtitle("Incidencia de la cuarentena sobre la movilidad de las personas") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(),
+        plot.title = element_text(hjust = 0.5, face = "bold.italic",size=15),
+        aspect.ratio = 1/2,
+        text = element_text(size=15, face="italic"))
+g
+
+```
+
+```{r}
+ggsave("Dia4.png",plot=g,units = 'mm',dpi=300)
+```
+

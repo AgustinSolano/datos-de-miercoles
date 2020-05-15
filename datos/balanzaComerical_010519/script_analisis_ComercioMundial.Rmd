@@ -11,13 +11,22 @@ library(plyr)
 library(dplyr)
 library(ggplot2)
 library(tidyr)
+library(png)
+library(grid)
 ```
 
 
 Levanto Datos
 ```{r}
-datosComercio = read.csv("comercio_hispanoamerica_mundo_agregado.csv")
+datosComercio = readr::read_csv("comercio_hispanoamerica_mundo_agregado.csv") #read.csv("comercio_hispanoamerica_mundo_agregado.csv")
 ```
+
+Levanto imagen de la bandera
+```{r}
+bandera = readPNG("banderaArgentina.png")
+bandera_grid <- rasterGrob(bandera, interpolate=TRUE)
+```
+
 
 Estudio de la Blanza comercial argentina entre 2013 y 2017
 Cada fila tiene los datos de exportacion e importacion en dolares para cada relaicon comercial con cada paise, por lo que me voy a quedar solo con los dato para los cuales Argentina es el pais de origen
@@ -34,37 +43,45 @@ datosArgLong = datosArg %>%
 
 ```
 
-
+Me quedo con algunos producto caracteristicos
 ```{r}
-#Me quedo con algunos producto caracteristicos
 datosArgLongSelect = datosArgLong %>%filter(nombre_comunidad_producto=="Alimentos"|
 nombre_comunidad_producto=="Maquinaria"|nombre_comunidad_producto=="Productos Minerales"|
-  nombre_comunidad_producto=="Productos QuÃmicos"|nombre_comunidad_producto=="Productos Vegetales"|
+  nombre_comunidad_producto=="Productos Químicos"|nombre_comunidad_producto=="Productos Vegetales"|
   nombre_comunidad_producto=="Transporte")
 datosArgSelect = datosArg %>%filter(nombre_comunidad_producto=="Alimentos"|
 nombre_comunidad_producto=="Maquinaria"|nombre_comunidad_producto=="Productos Minerales"|
-  nombre_comunidad_producto=="Productos QuÃmicos"|nombre_comunidad_producto=="Productos Vegetales"|
+  nombre_comunidad_producto=="Productos Químicos"|nombre_comunidad_producto=="Productos Vegetales"|
   nombre_comunidad_producto=="Transporte")
 
 datoArgGlobales = datosArgSelect%>%
   group_by(anio)%>%
   summarise(balanzaGlobal=sum(balanzaComercial)) %>%
   mutate(signo=ifelse(balanzaGlobal>=0,1,0))
+```
 
+
+
+```{r}
 ggplot(datosArgLongSelect) + 
   geom_col(aes(x=anio,y=valorDolares,fill=tipoTransaccion),position="dodge2") +
   facet_grid(.~nombre_comunidad_producto)
 
 ggplot(datosArgSelect,aes(x=anio,y=balanzaComercial)) +
-  geom_col(data=datoArgGlobales,aes(x=anio,y=balanzaGlobal,fill=factor(signo)),color="black",alpha=.15,width=.5) +
-  geom_line(aes(group=nombre_comunidad_producto),color="azure2",size=1.2) +
+  geom_col(data=datoArgGlobales,aes(x=anio,y=balanzaGlobal,fill=factor(signo)),color="black",alpha=.05,width=.5) +
+  geom_line(aes(group=nombre_comunidad_producto),color="cadetblue3",size=1,alpha=.7) +
   geom_point(aes(color=nombre_comunidad_producto),size=5) + #,shape=nombre_comunidad_producto 
   scale_color_brewer(palette = "Set2",name="Tipos de Productos") +
   scale_fill_manual(values = c("red","blue") )+
   geom_hline(yintercept = 0) +
-  ggtitle("Balanza comercial de productos seleccionador y tendencia global")+
-  xlab("Año") + ylab("Valor en Millones de Dólares")
-  guides(fill=F) +theme_light() 
+  ggtitle("Balanza comercial de productos seleccionados y balanza global")+
+  xlab("Año") + ylab("Valor en Millones de Dólares")+
+  guides(fill=F) +
+  theme(axis.text.x=element_text(size = 9),plot.title = element_text(size = 20, face = "bold",hjust=0.5)) + 
+  annotation_custom(bandera_grid, xmin=-Inf, xmax=Inf, ymin=0, ymax=10000) +
+  theme_light() 
+
+ggsave(filename = "balanzaComercialProductosSeleccionados_Arg.png")
 
 # ggplot() +
 #   geom_col(data=datoArgGlobales,aes(x=anio,y=balanzaGlobal),width = 2)
