@@ -1,0 +1,135 @@
+---
+title: "Dia 4"
+author: "Bioing. Agustin Solano"
+date: "15/5/2020"
+output: pdf_document
+---
+
+
+Levanto librerias necesarias
+```{r}
+if("dplyr" %in% (.packages())){
+          detach("package:dplyr", unload=TRUE) 
+          detach("package:plyr", unload=TRUE) 
+} 
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(png)
+library(grid)
+library(ggraph)
+library(igraph)
+```
+
+```{r }
+datos = read.csv('cannabis_strains.csv',na.strings = "")
+str(datos)
+```
+
+```{r}
+#Como maximo tienen 4 sabores en Flavor por lo que separo la columna de sabores en 4 columnas
+#Como maximo tienen 5 effectos en Effects por lo que separo la columna de sabores en 5 columnas
+datosProc = datos %>%
+  separate(Flavor,c("F1","F2","F3","F4"), sep=",") %>%
+  separate(Effects,c("E1","E2","E3","E4","E5"), sep=",") %>%
+  select(-Description) %>%
+  filter(E1!="None"|F1!="None") %>%
+  arrange(Type, Rating) %>%
+  filter(Rating==5.0)
+datosProc
+
+datosFlavor = datosProc %>%
+  select(-E1,-E2,-E3,-E4,-E5) %>%
+  pivot_longer(cols=F1:F4,names_to = "Flavor_order", values_to = "Flavor") %>%
+  filter(Flavor!="NA")
+datosFlavor
+
+#Busco cuales son los sabores mas populares
+saboresPopulares = datosFlavor %>%
+  group_by(Flavor) %>%
+  summarise(cant = n()) %>%
+  arrange(desc(cant))
+listaSaboresPop = saboresPopulares$Flavor[1:8]
+listaSaboresPop
+
+datosFlavorPop = datosFlavor %>%
+  filter(Flavor %in% listaSaboresPop) %>%
+  group_by(Strain) %>%
+  mutate(cant = n()) %>%
+  arrange(desc(cant)) %>%
+  filter(cant>=2)
+datosFlavorPop
+```
+```{r}
+dataUsar = datosFlavorPop
+
+datosRelacion = data.frame()
+flavors = unique(dataUsar$Flavor)
+for(i in 1:length(flavors)){
+  
+  auxData = dataUsar %>% filter(Flavor==flavors[i]) %>% arrange(Type)
+  if (nrow(auxData)>=2){
+    for(j in 1:(nrow(auxData)-1)){
+      auxFrame = data.frame(
+        from = auxData$Strain[j],
+        to = auxData$Strain[j + 1],
+        tipo1 = auxData$Type[j],
+        tipo2 = auxData$Type[j + 1],
+        Flavor = auxData$Flavor[j]
+      )
+      datosRelacion = rbind(datosRelacion, auxFrame)
+    }
+  }
+
+}
+
+datosRelacion = datosRelacion %>%
+  arrange(tipo1,tipo2)
+datosRelacion
+
+listaLimites = data.frame(id = unique(c(as.character(datosRelacion$from),as.character(datosRelacion$to))))
+listaLimites
+```
+
+Levanto imagen
+```{r}
+imagen = readPNG("leaf.png")
+imagen_grid <- rasterGrob(imagen, interpolate=TRUE)
+```
+
+```{r}
+routes_igraph <- graph_from_data_frame(d = datosRelacion, vertices = listaLimites, 
+                                       directed = TRUE)
+
+cook1 <- ggraph(routes_igraph, layout = 'linear') + 
+        geom_edge_arc(aes(color=Flavor),width=1, alpha=1) +
+        #geom_node_point(size=0.01) +
+        scale_edge_color_brewer(direction = -1, palette = "Greens",
+                                labels=c("Berry","Citrico","Diesel","Tierra",
+                                          "Flores","Punzante","Dulce"),
+                                name="Sabores") +
+        facet_wrap(tipo2~tipo1, scale="free_x") +
+  #annotation_custom(imagen_grid, xmin=0, xmax=7, ymin=10, ymax=15) +
+  theme_void() +
+  theme(panel.background = element_rect(fill="gray50"),
+        strip.text = element_text(face="bold"),
+        aspect.ratio = 1/1.3)
+cook1
+
+
+```
+
+```{r}
+ggsave("Dia5.png",plot=cook1,units = 'mm',dpi=300)
+```
+
+```{r}
+edge_list <- tibble(from = c("a", "b", "b", "c", "d"), to = c("b", "c", "d", "d", "a"))
+node_list <- tibble(id = c("a", "b", "c", "d"))
+
+routes_igraph <- graph_from_data_frame(d = edge_list, vertices = node_list, directed = TRUE)
+ggraph(routes_igraph, layout = "linear") + 
+    geom_edge_arc(aes(width = 1), alpha = 0.8)
+```
+
