@@ -1,0 +1,64 @@
+---
+title: "Dia 7"
+author: "Bioing. Agustin Solano"
+date: "18/5/2020"
+output: pdf_document
+---
+
+
+Levanto librerias necesarias
+```{r}
+if("dplyr" %in% (.packages())){
+          detach("package:dplyr", unload=TRUE) 
+          detach("package:plyr", unload=TRUE) 
+} 
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(png)
+library(grid)
+library(ggridges)
+```
+
+```{r }
+datos = read.csv('husos.csv',header=T, sep=',')
+str(datos)
+```
+
+```{r}
+datosFilt = datos %>%
+  select(Sesion,Canal,FrecMedia) %>%
+  filter(Sesion=="ctrSleep") %>%
+  filter(Canal %in% c("C3","C4","Cz","FC1","FC2","FC5","FC6","Fz","P3","P4","Pz")) %>%
+  mutate(Canal = factor(as.character(Canal),
+                           levels=c("Fz","FC1","FC2","FC5","FC6","Cz","C3","C4","Pz","P3","P4"))) %>%
+  mutate(region = ifelse(Canal %in% c("Fz","FC1","FC2","FC5","FC6"),"Frontal",
+                         ifelse(Canal %in% c("Cz","C3","C4"),"Central","Parietal")))
+  
+str(datosFilt)
+```
+
+```{r}
+
+g=ggplot(datosFilt,aes(x=FrecMedia,y=reorder(Canal,desc(Canal)), fill = region)) +
+  geom_density_ridges() +
+  geom_vline(xintercept = 12, linetype = "dashed", color = "gray60", alpha=.7) +
+  scale_fill_manual(values = c("#FDDBC7","#2166AC","#B2182B"),name="Region del Cerebro") +
+  xlab("Frec. [Hz]") + ylab("Electrodo de EEG") +
+  labs(title = 'Frecuencia media de los Husos del Sueño') +
+  xlim(8,15) +
+  theme_ridges() + 
+  theme(legend.position = "right",axis.title.y = element_text(vjust = 0.1,face = "bold",size=12),
+        axis.title.x = element_text(hjust = 0.5,face = "bold",size=12),
+        plot.title = element_text(size=20, face="italic"))
+g
+
+```
+
+```{r}
+ggsave("Dia7.png",plot=g,units = 'mm',dpi=300)
+```
+
+
+
