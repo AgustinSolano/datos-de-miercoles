@@ -1,0 +1,81 @@
+---
+title: "Dia 6"
+author: "Bioing. Agustin Solano"
+date: "17/5/2020"
+output: pdf_document
+---
+
+
+Levanto librerias necesarias
+```{r}
+if("dplyr" %in% (.packages())){
+          detach("package:dplyr", unload=TRUE) 
+          detach("package:plyr", unload=TRUE) 
+} 
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(png)
+library(grid)
+```
+
+```{r }
+datos = read.csv('series-hist-ricas-anac.csv',header=F, sep=',')
+#str(datos)
+```
+
+```{r}
+tabla1 = as.data.frame(t(datos[4:8,] %>% select(V6,V9:V240))) %>%
+  plyr::rename(c("4"="year", "5"="month", "6"="cabotaje", "7"="internacional","8"="total")) %>%
+  slice(-c(1)) %>%
+  mutate(year=as.numeric(as.character(year)),cabotaje=as.numeric(as.character(cabotaje)),
+         internacional=as.numeric(as.character(internacional)),
+         total=as.numeric(as.character(total))) %>%
+  filter((year>=2015)&year!=2020) %>%
+  pivot_longer(cols=cabotaje:total,names_to = "tipo",values_to = "cantidad")
+tabla1
+
+summaXyearXtipo = tabla1 %>%
+  group_by(year,tipo) %>%
+  summarise(suma = sum(cantidad)) %>%
+  filter(tipo != "total") %>%
+  arrange(interaction(tipo,as.factor(year)))
+summaXyearXtipo
+
+summaXyear = tabla1 %>%
+  group_by(year) %>%
+  filter(tipo != "total") %>%
+  summarise(suma = sum(cantidad)) 
+  
+summaXyear
+# 
+# 
+# summary(tabla1)
+```
+
+```{r}
+plt <- ggplot() + geom_col(aes(x = 2, y = suma,fill=tipo, 
+                               group = interaction(tipo,as.factor(year))), 
+                    data = summaXyearXtipo, color = "black") + 
+   geom_col(aes(x = 3, y = suma,fill=as.factor(year)), 
+                    data = summaXyear, color = "black") +
+  scale_fill_manual(values = c("hotpink","indianred","ivory","khaki","lavender",
+                               "blue1","brown1"),name="Año y tipo de vuelo") +
+  coord_polar(theta = "y") +
+  ggtitle("Vuelos en los ultimos 4 años") +
+  xlim(0, 3.5) + labs(x = NULL, y = NULL) + 
+  theme_void() +
+  theme(axis.ticks=element_blank(),
+axis.text=element_blank(),
+axis.title=element_blank())
+
+plt 
+```
+
+```{r}
+ggsave("Dia6.png",plot=plt,units = 'mm',dpi=300)
+```
+
+
+
