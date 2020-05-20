@@ -1,0 +1,69 @@
+---
+title: "Dia 9"
+author: "Bioing. Agustin Solano"
+date: "20/5/2020"
+output: pdf_document
+---
+
+
+Levanto librerias necesarias
+```{r}
+if("dplyr" %in% (.packages())){
+          detach("package:dplyr", unload=TRUE) 
+          detach("package:plyr", unload=TRUE) 
+} 
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(png)
+library(grid)
+library(lubridate)
+```
+
+```{r }
+datos = read.csv('estafasPiramidales.csv',header=T, sep=',',na.strings = "",stringsAsFactors=FALSE)
+str(datos)
+```
+
+```{r}
+datosProc = datos %>%
+  mutate(telar.de.la.abundancia = ifelse(as.character(telar.de.la.abundancia)=="<1","0",as.character(telar.de.la.abundancia)))%>%
+  mutate(EsquemaPonzi = ifelse(as.character(EsquemaPonzi)=="<1","0",as.character(EsquemaPonzi))) %>%
+  mutate(telar.de.la.abundancia = as.numeric(telar.de.la.abundancia), EsquemaPonzi = as.numeric(EsquemaPonzi),
+         Mes = as.character(Mes),x=c(1:197)) %>%
+  mutate(date = parse_date_time(Mes, "%Y-%m")) %>%
+  #mutate(diaSem = weekdays(Dia), mes = months(Dia), numDia = as.numeric(format(Dia,format='%d'))) %>%
+  pivot_longer(cols=nuskin:EsquemaPonzi,names_to = "Estafa",values_to = "Valor") 
+datosProc
+```
+
+
+```{r}
+# g1 = ggplot(datosProc%>%filter(Estafa!="EsquemaPonzi"), aes(x=date, y=Valor,fill=Estafa)) + 
+#     geom_area() +
+#     theme_classic()
+# g1
+
+g2 = ggplot(datosProc%>%filter((Estafa!="EsquemaPonzi")&(date>ymd("2010-01-01"))), aes(x=date, y=Valor,fill=Estafa),alpha=0.8) + 
+    geom_area() +
+    ylab("Búsquedas en Google") + xlab(NULL) +
+    scale_fill_manual(name="Nombre de la Estafa",values = c("#7ac143","deepskyblue3","darkorchid1"),
+                      labels = c("Herbalife","NuSkin","Telares de la Abundancia")) + 
+    ggtitle("Popularidad de las estafas piramidales") +
+    theme_light() +
+    theme(plot.title = element_text(size=15,face="bold"),
+          legend.text = element_text(size=12),legend.position = "bottom",
+          legend.title = element_text(size=14),
+          axis.text = element_text(size=12,face="italic"),
+          axis.title = element_text(size=14),
+          aspect.ratio = 1/3)
+g2
+```
+
+```{r}
+ggsave("Dia9.png",plot=g2,units = 'mm',dpi=300)
+```
+
+
+
