@@ -1,0 +1,106 @@
+---
+title: "Dia 8"
+author: "Bioing. Agustin Solano"
+date: "19/5/2020"
+output: pdf_document
+---
+
+
+Levanto librerias necesarias
+```{r}
+if("dplyr" %in% (.packages())){
+          detach("package:dplyr", unload=TRUE) 
+          detach("package:plyr", unload=TRUE) 
+} 
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(png)
+library(grid)
+library(metR)
+```
+
+```{r }
+datos = read.csv('shot_logs.csv',header=T, sep=',')
+str(datos)
+```
+
+```{r}
+datosFilt = datos %>%
+  filter(player_name=="stephen curry") %>%
+  #select(SHOT_CLOCK, SHOT_DIST,SHOT_RESULT)
+  select(SHOT_NUMBER,PERIOD,SHOT_RESULT) %>%
+  group_by(SHOT_NUMBER,PERIOD,SHOT_RESULT) %>%
+  summarise(n = n()) %>%
+  pivot_wider(names_from = SHOT_RESULT,values_from = n) %>%
+  mutate(accuracy = made/(made+missed)*100)
+
+datosFilt
+
+datosFilt2 = datos %>%
+  drop_na() %>%
+  filter(player_name=="stephen curry") %>%
+  select(SHOT_CLOCK, SHOT_DIST,SHOT_RESULT) %>%
+  mutate(clock = cut(SHOT_CLOCK, breaks = seq(from=0, to =24, by=1.5)),
+         dist = cut(SHOT_DIST, breaks = seq(from=0, to =45, by=4))) %>%
+  group_by(clock,dist,SHOT_RESULT) %>%
+  summarise(n = n()) %>%
+  pivot_wider(names_from = SHOT_RESULT,values_from = n) %>%
+  #mutate(made = ifelse(is.na(made),0,made),missed = ifelse(is.na(missed),0,missed)) %>%
+  mutate(accuracy = made/(made+missed)*100) #%>%
+  #mutate(accuracy = ifelse(is.na(accuracy),0,accuracy))
+
+datosFilt2
+
+dataCont = datosFilt2 %>% select(clock,dist,accuracy) %>%
+  ungroup(clock,dist) %>%
+  rename(x=clock,y=dist,z=accuracy) %>%
+  mutate(x = as.numeric(x), y=as.numeric(y))
+dataCont
+
+dataAux = complete(datosFilt2, nesting(clock,dist) , fill = list(accuracy = 0))
+#dataAux = expand(datosFilt2, nesting(clock))
+dataAux
+
+
+dataAux = datosFilt2 %>% select(clock,dist,accuracy) %>% 
+  complete(nesting(clock,dist), fill = list(accuracy = 0)) 
+```
+
+
+```{r}
+# ggplot(dataAux, aes(x=as.numeric(clock), y=as.numeric(dist))) +
+#   geom_contour(aes(z = accuracy), 
+#                binwidth = 10,
+#                color = "black") +
+#   scale_x_continuous(name = NULL, 
+#                      expand = c(0, 0)) +
+#   scale_y_continuous(name = NULL, 
+#                      expand = c(0, 0)) +
+#   coord_equal() +
+#   theme_minimal()
+
+mycol <- c("navy", "blue", "cyan", "lightcyan", "yellow", "red", "red4")
+g = ggplot(dataAux, aes(x=as.numeric(clock), y=as.numeric(dist))) +
+  geom_contour(aes(z = accuracy,
+                   color = ..level..),
+               binwidth = 7) +
+  scale_x_continuous(breaks=c(4,8,12,16),
+          labels=c(6,12,18,24),name="Tiempo restante para tirar [segs]",expand = c(0, 0)) +
+  scale_y_continuous(breaks=c(2,4,6,8),
+          labels=c(3.5,7,10.5,14),name="Distancia del tipo [mts]",expand = c(0, 0)) +
+  coord_equal() +
+  scale_color_gradientn(colours = mycol, name="% tiros encestados") +
+  theme_classic() +
+  theme(text = element_text(size=15, face="bold"))
+ 
+g
+```
+
+```{r}
+ggsave("Dia8.png",plot=g,units = 'mm',dpi=300)
+```
+
+
+
