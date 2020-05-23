@@ -1,0 +1,109 @@
+---
+title: "Dia 10-11"
+author: "Bioing. Agustin Solano"
+date: "22/5/2020"
+output: pdf_document
+---
+
+
+Levanto librerias necesarias
+```{r}
+if("dplyr" %in% (.packages())){
+          detach("package:dplyr", unload=TRUE) 
+          detach("package:plyr", unload=TRUE) 
+} 
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(png)
+library(grid)
+library(forcats)
+```
+
+```{r }
+datos = read.csv('cannabis_strains.csv',na.strings = "")
+str(datos)
+```
+
+```{r}
+#Como maximo tienen 4 sabores en Flavor por lo que separo la columna de sabores en 4 columnas
+#Como maximo tienen 5 effectos en Effects por lo que separo la columna de sabores en 5 columnas
+datosProc = datos %>%
+  separate(Flavor,c("F1","F2","F3","F4"), sep=",") %>%
+  separate(Effects,c("E1","E2","E3","E4","E5"), sep=",") %>%
+  select(-Description) %>%
+  filter(E1!="None"|F1!="None") %>%
+  arrange(Type, Rating) #%>%
+  #filter(Rating==5.0)
+datosProc
+# 
+datosFlavorEffect = datosProc %>%
+  #select(-E1,-E2,-E3,-E4,-E5) %>%
+  pivot_longer(cols=F1:F4,names_to = "Flavor_order", values_to = "Flavor") %>%
+  pivot_longer(cols=E1:E5,names_to = "Effect_order", values_to = "Effect") #%>%
+  #filter(Flavor!="NA")
+datosFlavorEffect
+
+datosFlavorEffect_hybrid = datosFlavorEffect %>% filter(Type=="hybrid")
+tablaFlavEff_hybrid = as.data.frame(table(datosFlavorEffect_hybrid$Flavor,datosFlavorEffect_hybrid$Effect))
+fct_reorder(tablaFlavEff_hybrid$Var1, tablaFlavEff_hybrid$Freq, max)
+
+tablaFlavEff_hybrid
+
+datosFlavorEffect_indica = datosFlavorEffect %>% filter(Type=="indica")
+tablaFlavEff_indica = as.data.frame(table(datosFlavorEffect_indica$Flavor,datosFlavorEffect_indica$Effect))
+tablaFlavEff_indica
+
+datosFlavorEffect_sativa = datosFlavorEffect %>% filter(Type=="sativa")
+tablaFlavEff_sativa = as.data.frame(table(datosFlavorEffect_sativa$Flavor,datosFlavorEffect_sativa$Effect))
+tablaFlavEff_sativa
+
+```
+
+```{r}
+gHibrida = ggplot(tablaFlavEff_hybrid, aes(x = fct_reorder(Var1, Freq, max), y = Var2, fill = Freq)) + 
+  geom_tile() +
+  scale_fill_continuous(type = "viridis", name="Cantidad") +
+  scale_x_discrete(limits = rev(levels(fct_reorder(tablaFlavEff_hybrid$Var1, tablaFlavEff_hybrid$Freq, max)))) +
+  xlab("Sabor") + ylab("Efecto") +
+  ggtitle("Relacion sabor/efecto - Variedad Hibrida") + 
+  theme(axis.text.x = element_text(angle=90,size=9, vjust=.9),
+        axis.text.y = element_text(size=12),
+        plot.title = element_text(size = 20),
+        aspect.ratio = 1/1.5)
+gHibrida
+
+gIndica = ggplot(tablaFlavEff_indica %>% arrange(desc(Freq)), aes(x = fct_reorder(Var1, Freq, max), y = Var2, fill = Freq)) + 
+  geom_tile() +
+  scale_x_discrete(limits = rev(levels(fct_reorder(tablaFlavEff_hybrid$Var1, tablaFlavEff_hybrid$Freq, max)))) +
+  xlab("Sabor") + ylab("Efecto") +
+  ggtitle("Relacion sabor/efecto - Variedad Indica") + 
+  scale_fill_gradientn(colours = rainbow(7), name="Cantidad") +
+  theme(axis.text.x = element_text(angle=90,size=9, vjust=.9),
+        axis.text.y = element_text(size=12),
+        plot.title = element_text(size = 20),
+        aspect.ratio = 1/1.5)
+gIndica
+
+gSativa = ggplot(tablaFlavEff_sativa %>% arrange(desc(Freq)), aes(x = fct_reorder(Var1, Freq, max), y = Var2, fill = Freq)) + 
+  geom_tile() +
+  scale_x_discrete(limits = rev(levels(fct_reorder(tablaFlavEff_hybrid$Var1, tablaFlavEff_hybrid$Freq, max)))) +
+  xlab("Sabor") + ylab("Efecto") +
+  ggtitle("Relacion sabor/efecto - Variedad Sativa") + 
+  scale_fill_gradient(low = "#00ff00", high = "#003300", name="Cantidad") +
+  theme(axis.text.x = element_text(angle=90,size=9, vjust=.9),
+        axis.text.y = element_text(size=12),
+        plot.title = element_text(size = 20),
+        aspect.ratio = 1/1.5)
+gSativa
+```
+
+```{r}
+ggsave("Dia10_11_Hibrida.png",plot=gHibrida,units = 'mm',dpi=300)
+ggsave("Dia10_11_Indica.png",plot=gIndica,units = 'mm',dpi=300)
+ggsave("Dia10_11_Sativa.png",plot=gSativa,units = 'mm',dpi=300)
+```
+
+
+
