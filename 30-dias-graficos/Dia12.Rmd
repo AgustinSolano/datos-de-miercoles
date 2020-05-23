@@ -1,0 +1,148 @@
+---
+title: "Dia 12"
+author: "Bioing. Agustin Solano"
+date: "23/5/2020"
+output: pdf_document
+---
+
+
+Levanto librerias necesarias
+```{r}
+if("dplyr" %in% (.packages())){
+          detach("package:dplyr", unload=TRUE) 
+          detach("package:plyr", unload=TRUE) 
+} 
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(png)
+library(grid)
+library(forcats)
+```
+
+```{r }
+datos = read.csv('acceso_a_TICs_Argentina_cuatroTrimestre2019_INDEC.csv',na.strings = "")
+str(datos)
+```
+
+```{r}
+datosProcAreasGrandes = datos %>%
+  filter((Area.Geografica == "Ciudad Autónoma de Buenos Aires (2)")|
+           (Area.Geografica == "Partidos del Gran Buenos Aires ( 2)")|
+           (Area.Geografica == "Cuyo")|
+           (Area.Geografica == "Noreste")|
+           (Area.Geografica == "Noroeste")|
+           (Area.Geografica == "Pampeana")|
+           (Area.Geografica == "Patagonia")) %>%
+  select(Area.Geografica,Comp.Si,Internet.Si) %>%
+  pivot_longer(cols=Comp.Si:Internet.Si, names_to = "TIC","porc")
+datosProcAreasGrandes
+
+datosProcAreasParticulares = datos %>%
+  filter((Area.Geografica != "Ciudad Autónoma de Buenos Aires (2)")&
+           (Area.Geografica != "Partidos del Gran Buenos Aires ( 2)")&
+           (Area.Geografica != "Cuyo")&
+           (Area.Geografica != "Noreste")&
+           (Area.Geografica != "Noroeste")&
+           (Area.Geografica != "Pampeana")&
+           (Area.Geografica != "Patagonia")&
+           (Area.Geografica != "Total 31 aglomerados urbanos")&
+           (Area.Geografica != "Aglomerados del interior")&
+           (Area.Geografica != "Regiones")&
+           (Area.Geografica != "Total de aglomerados de 500.000 y más habitantes")&
+           (Area.Geografica != "Total de aglomerados de menos de 500.000 habitantes")) %>%
+  select(Area.Geografica,Comp.Si,Internet.Si) %>%
+  pivot_longer(cols=Comp.Si:Internet.Si, names_to = "TIC","porc") #%>%
+
+revalue(datosProcAreasParticulares$Area.Geografica,c("Gran Buenos Aires"="GBA","Gran Buenos Aires"="GBA"))
+datosProcAreasParticulares
+
+
+
+# #Como maximo tienen 4 sabores en Flavor por lo que separo la columna de sabores en 4 columnas
+# #Como maximo tienen 5 effectos en Effects por lo que separo la columna de sabores en 5 columnas
+# datosProc = datos %>%
+#   separate(Flavor,c("F1","F2","F3","F4"), sep=",") %>%
+#   separate(Effects,c("E1","E2","E3","E4","E5"), sep=",") %>%
+#   select(-Description) %>%
+#   filter(E1!="None"|F1!="None") %>%
+#   arrange(Type, Rating) #%>%
+#   #filter(Rating==5.0)
+# datosProc
+# # 
+# datosFlavorEffect = datosProc %>%
+#   #select(-E1,-E2,-E3,-E4,-E5) %>%
+#   pivot_longer(cols=F1:F4,names_to = "Flavor_order", values_to = "Flavor") %>%
+#   pivot_longer(cols=E1:E5,names_to = "Effect_order", values_to = "Effect") #%>%
+#   #filter(Flavor!="NA")
+# datosFlavorEffect
+# 
+# datosFlavorEffect_hybrid = datosFlavorEffect %>% filter(Type=="hybrid")
+# tablaFlavEff_hybrid = as.data.frame(table(datosFlavorEffect_hybrid$Flavor,datosFlavorEffect_hybrid$Effect))
+# fct_reorder(tablaFlavEff_hybrid$Var1, tablaFlavEff_hybrid$Freq, max)
+# 
+# tablaFlavEff_hybrid
+# 
+# datosFlavorEffect_indica = datosFlavorEffect %>% filter(Type=="indica")
+# tablaFlavEff_indica = as.data.frame(table(datosFlavorEffect_indica$Flavor,datosFlavorEffect_indica$Effect))
+# tablaFlavEff_indica
+# 
+# datosFlavorEffect_sativa = datosFlavorEffect %>% filter(Type=="sativa")
+# tablaFlavEff_sativa = as.data.frame(table(datosFlavorEffect_sativa$Flavor,datosFlavorEffect_sativa$Effect))
+# tablaFlavEff_sativa
+
+```
+
+```{r}
+g1 = ggplot(data=datosProcAreasGrandes, aes(x=Area.Geografica, y=value,color=TIC)) +
+  geom_point(aes(shape=TIC,fill=TIC),color="tan", position = position_dodge(.5),
+             size=7,stroke=2) + 
+  geom_linerange(aes(ymin=0, ymax=value), position = position_dodge(.5),show.legend = FALSE,
+                 size=1.5) +
+  scale_shape_manual(values = c(24,21),labels=c("Tiene computadora?","Accede a Internet?"),name=NULL) +
+  scale_fill_brewer(palette = "Set1",labels=c("Tiene computadora?","Accede a Internet?"),name=NULL) +
+  guides(color=NULL) +
+  ylim(0,100) +
+  scale_x_discrete(labels=c("Ciudad Autónoma de Buenos Aires (2)" = "CABA",
+                            "Partidos del Gran Buenos Aires ( 2)" = "PBA"), name=NULL) +
+  ylab("% Respuestas Afirmativas") +
+  theme_minimal() +
+  theme(panel.grid.major.x = element_blank(),legend.position = "top",
+        panel.grid = element_line(color = "black"), 
+        axis.text.x = element_text(size=13,face="bold",angle=15),axis.text.y = element_text(size=14),
+        axis.title.y = element_text(size=17,face="bold"),
+        plot.background = element_rect(fill = "#DBE485"),
+        legend.text = element_text(size=12))
+  g1
+  
+  g2 = ggplot(data=datosProcAreasParticulares, aes(x=Area.Geografica, y=value,color=TIC)) +
+  geom_point(aes(shape=TIC,fill=TIC),color="black", position = position_dodge(.5),
+             size=3,stroke=1.5) + 
+  geom_linerange(aes(ymin=0, ymax=value), position = position_dodge(.5),show.legend = FALSE,
+                 size=1) +
+  scale_shape_manual(values = c(22,23),labels=c("Tiene computadora?","Accede a Internet?"),name=NULL) +
+  scale_fill_manual(values=c("royalblue3","maroon3"),labels=c("Tiene computadora?","Accede a Internet?"),name=NULL) +
+  scale_color_manual(values=c("royalblue3","maroon3"),name=NULL) +
+  guides(color=NULL) +
+  ylim(0,100) +
+  scale_x_discrete(labels=c("Ciudad Autónoma de Buenos Aires (2)" = "CABA",
+                            "Partidos del Gran Buenos Aires ( 2)" = "PBA"), name=NULL) +
+  ylab("% Respuestas Afirmativas") +
+  theme_minimal() +
+  theme(panel.grid.major.x = element_blank(),legend.position = "top",
+        panel.grid = element_line(color = "black"), 
+        axis.text.x = element_text(size=12,face="bold",angle=40),axis.text.y = element_text(size=14),
+        axis.title.y = element_text(size=17,face="bold"),
+        plot.background = element_rect(fill = "wheat"),
+        legend.text = element_text(size=12))
+  g2
+  
+```
+
+```{r}
+ggsave("Dia12_GrandesRegiones.png",plot=g1,units = 'mm',dpi=300)
+```
+
+
+
