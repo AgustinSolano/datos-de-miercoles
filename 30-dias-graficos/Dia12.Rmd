@@ -28,7 +28,7 @@ str(datos)
 
 ```{r}
 datosProcAreasGrandes = datos %>%
-  filter((Area.Geografica == "Ciudad Autónoma de Buenos Aires (2)")|
+  filter((Area.Geografica == "Ciudad Autonoma de Buenos Aires (2)")|
            (Area.Geografica == "Partidos del Gran Buenos Aires ( 2)")|
            (Area.Geografica == "Cuyo")|
            (Area.Geografica == "Noreste")|
@@ -40,7 +40,7 @@ datosProcAreasGrandes = datos %>%
 datosProcAreasGrandes
 
 datosProcAreasParticulares = datos %>%
-  filter((Area.Geografica != "Ciudad Autónoma de Buenos Aires (2)")&
+  filter((Area.Geografica != "Ciudad Autonoma de Buenos Aires (2)")&
            (Area.Geografica != "Partidos del Gran Buenos Aires ( 2)")&
            (Area.Geografica != "Cuyo")&
            (Area.Geografica != "Noreste")&
@@ -50,47 +50,15 @@ datosProcAreasParticulares = datos %>%
            (Area.Geografica != "Total 31 aglomerados urbanos")&
            (Area.Geografica != "Aglomerados del interior")&
            (Area.Geografica != "Regiones")&
-           (Area.Geografica != "Total de aglomerados de 500.000 y más habitantes")&
+           (Area.Geografica != "Total de aglomerados de 500.000 y mas habitantes")&
            (Area.Geografica != "Total de aglomerados de menos de 500.000 habitantes")) %>%
   select(Area.Geografica,Comp.Si,Internet.Si) %>%
   pivot_longer(cols=Comp.Si:Internet.Si, names_to = "TIC","porc") #%>%
-
-revalue(datosProcAreasParticulares$Area.Geografica,c("Gran Buenos Aires"="GBA","Gran Buenos Aires"="GBA"))
 datosProcAreasParticulares
 
 
 
-# #Como maximo tienen 4 sabores en Flavor por lo que separo la columna de sabores en 4 columnas
-# #Como maximo tienen 5 effectos en Effects por lo que separo la columna de sabores en 5 columnas
-# datosProc = datos %>%
-#   separate(Flavor,c("F1","F2","F3","F4"), sep=",") %>%
-#   separate(Effects,c("E1","E2","E3","E4","E5"), sep=",") %>%
-#   select(-Description) %>%
-#   filter(E1!="None"|F1!="None") %>%
-#   arrange(Type, Rating) #%>%
-#   #filter(Rating==5.0)
-# datosProc
-# # 
-# datosFlavorEffect = datosProc %>%
-#   #select(-E1,-E2,-E3,-E4,-E5) %>%
-#   pivot_longer(cols=F1:F4,names_to = "Flavor_order", values_to = "Flavor") %>%
-#   pivot_longer(cols=E1:E5,names_to = "Effect_order", values_to = "Effect") #%>%
-#   #filter(Flavor!="NA")
-# datosFlavorEffect
-# 
-# datosFlavorEffect_hybrid = datosFlavorEffect %>% filter(Type=="hybrid")
-# tablaFlavEff_hybrid = as.data.frame(table(datosFlavorEffect_hybrid$Flavor,datosFlavorEffect_hybrid$Effect))
-# fct_reorder(tablaFlavEff_hybrid$Var1, tablaFlavEff_hybrid$Freq, max)
-# 
-# tablaFlavEff_hybrid
-# 
-# datosFlavorEffect_indica = datosFlavorEffect %>% filter(Type=="indica")
-# tablaFlavEff_indica = as.data.frame(table(datosFlavorEffect_indica$Flavor,datosFlavorEffect_indica$Effect))
-# tablaFlavEff_indica
-# 
-# datosFlavorEffect_sativa = datosFlavorEffect %>% filter(Type=="sativa")
-# tablaFlavEff_sativa = as.data.frame(table(datosFlavorEffect_sativa$Flavor,datosFlavorEffect_sativa$Effect))
-# tablaFlavEff_sativa
+
 
 ```
 
@@ -104,7 +72,7 @@ g1 = ggplot(data=datosProcAreasGrandes, aes(x=Area.Geografica, y=value,color=TIC
   scale_fill_brewer(palette = "Set1",labels=c("Tiene computadora?","Accede a Internet?"),name=NULL) +
   guides(color=NULL) +
   ylim(0,100) +
-  scale_x_discrete(labels=c("Ciudad Autónoma de Buenos Aires (2)" = "CABA",
+  scale_x_discrete(labels=c("Ciudad Autonoma de Buenos Aires (2)" = "CABA",
                             "Partidos del Gran Buenos Aires ( 2)" = "PBA"), name=NULL) +
   ylab("% Respuestas Afirmativas") +
   theme_minimal() +
@@ -132,7 +100,7 @@ g1 = ggplot(data=datosProcAreasGrandes, aes(x=Area.Geografica, y=value,color=TIC
   theme_minimal() +
   theme(panel.grid.major.x = element_blank(),legend.position = "top",
         panel.grid = element_line(color = "black"), 
-        axis.text.x = element_text(size=12,face="bold",angle=40),axis.text.y = element_text(size=14),
+        axis.text.x = element_text(size=12,face="bold",angle=90,vjust = 1.2),axis.text.y = element_text(size=14),
         axis.title.y = element_text(size=17,face="bold"),
         plot.background = element_rect(fill = "wheat"),
         legend.text = element_text(size=12))
@@ -142,6 +110,7 @@ g1 = ggplot(data=datosProcAreasGrandes, aes(x=Area.Geografica, y=value,color=TIC
 
 ```{r}
 ggsave("Dia12_GrandesRegiones.png",plot=g1,units = 'mm',dpi=300)
+ggsave("Dia12_GrandesParticulares.png",plot=g2,units = 'mm',dpi=300)
 ```
 
 
