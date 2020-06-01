@@ -1,0 +1,84 @@
+---
+title: "Dia 19 y 21"
+author: "Bioing. Agustin Solano"
+date: "01/06/2020"
+output: pdf_document
+---
+
+
+Levanto librerias necesarias
+```{r}
+if("dplyr" %in% (.packages())){
+          detach("package:dplyr", unload=TRUE) 
+          detach("package:plyr", unload=TRUE) 
+} 
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(png)
+library(grid)
+library(ggTimeSeries)
+library(png)
+```
+
+```{r }
+datos = read.csv('2019_busqueda_peliculas_Argentina.csv',header=T, sep=',',na.strings = "",stringsAsFactors=FALSE)
+str(datos)
+```
+
+```{r}
+datosProc = datos %>%
+  mutate(Semana = as.Date(Semana,format = "%Y-%m-%d")) %>%
+  pivot_longer(cols=Toy_Story_4:IT2,names_to="Pelicula",values_to="Busquedas")
+datosProc
+```
+
+Levanto imagen
+```{r}
+imagen = readPNG("cinema_icon4.png")
+imagen_grid <- rasterGrob(imagen, interpolate=TRUE)
+```
+
+```{r}
+annotSize = 4
+
+g2 = ggplot(datosProc,aes(x=Semana,y=Busquedas,group=Pelicula)) +
+  stat_steamgraph(aes(fill=Pelicula)) +
+  scale_fill_manual(values = c("#E429F2","#DD0000","#1da11f","#FFDF00","#1A48A0")) +
+  guides(fill=FALSE) +
+  #scale_x_continuous(n.breaks = 10) +
+  annotate(geom = "text", x = as.Date("2019-06-20",format="%Y-%m-%d"), y=8,
+            label="Toy Story 4",angle=0,size=annotSize,fontface =2,color="seagreen1") +
+  annotate(geom = "text", x = as.Date("2019-05-01",format="%Y-%m-%d"), y=0,
+            label="Endgame",angle=0,size=annotSize,fontface =2,color="seagreen1") +
+  annotate(geom = "text", x = as.Date("2019-08-08",format="%Y-%m-%d"), y=25,
+            label="La Odisea de los Giles",angle=90,size=annotSize,fontface =2,color="seagreen1") +
+  annotate(geom = "text", x = as.Date("2019-10-15",format="%Y-%m-%d"), y=-5,
+            label="Joker",angle=0,size=annotSize,fontface =2,color="seagreen1") +
+  annotate(geom = "text", x = as.Date("2019-09-10",format="%Y-%m-%d"), y=-7,
+            label="IT 2",angle=0,size=annotSize,fontface =2,color="seagreen1") +
+  annotation_custom(imagen_grid, xmin=-Inf, xmax=as.Date("2019-04-01"), ymin=10, ymax=60) +
+  theme_classic() +
+  labs(title = "Películas más populares de 2019",
+              subtitle = "Según búsquedas en Google en Argentina",
+              caption = "@Aguchosolano") +
+  theme(plot.title = element_text(size=15,face="bold"),
+          legend.text = element_text(size=12),legend.position = "bottom",
+          legend.title = element_text(size=14),
+          axis.text = element_text(size=12,face="italic"),
+          axis.text.x = element_text(angle = 25,vjust = .7),
+          axis.title = element_text(size=14),
+          axis.title.x = element_blank(),
+          panel.background = element_rect(fill="gray20"),
+          aspect.ratio = 1/2)
+  g2
+
+```
+
+```{r}
+ggsave("Dia19_21.png",plot=g2,units = 'mm',dpi=300)
+```
+
+
+
