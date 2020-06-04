@@ -1,0 +1,49 @@
+---
+title: "Dia 24 - 30 dias de graficos"
+author: "Bioing. Agustin Solano"
+date: "4/6/2020"
+output: pdf_document
+---
+
+```{r}
+library(ggplot2)
+library(geojsonio)
+library(broom)
+```
+
+```{r}
+spdf <- geojson_read("southAmerica_custom.geo.json",  what = "sp") 
+
+spdf_fortified <- tidy(spdf) %>%
+  mutate(pais = as.factor(group)) %>%
+  mutate(pais = recode(spdf_fortified$pais,'1.1'="Argentina",'1.2'="Argentina",'6.1'="Argentina",'10.1'="Guyana",
+                       '11.1'="Surinam",'12.1'="Peru",'13.1'="Venezuela",'2.1'="Bolivia",'3.1'="Brasil",
+                       '4.1'="Chile",'4.2'="Chile",'5.1'="Colombia",'7.1'="Ecuador",'8.1'="Paraguay",
+                       '9.1'="Uruguay",)) %>%
+  mutate(copas = ifelse(pais=="Uruguay",15,ifelse(pais=="Argentina",14,ifelse(pais=="Brasil",9,
+                  ifelse(pais=="Paraguay"|pais=="Chile"|pais=="Peru",2,
+                  ifelse(pais=="Colombia"|pais=="Bolivia",1,0))))))
+spdf_fortified
+```
+
+```{r}
+ggplot() +
+  geom_polygon(data = spdf_fortified, aes( x = long, y = lat, group = group,fill=pais), color="white") + #fill="#69b3a2"
+  theme_void() +
+  coord_map()
+
+g2=ggplot() +
+  geom_polygon(data = spdf_fortified, aes( x = long, y = lat, group = group,fill=as.factor(copas)), color="white") + #fill="#69b3a2"
+  theme_void() +
+  scale_fill_manual(values = c("black","#EDBC00","#A70042","#FFEE00","#004C99","#DB002C"),
+                    name=" Cantidad de Copas") +
+  ggtitle("Copas America ganadas por país") +
+  coord_map() +
+  theme(legend.position = "bottom",
+        text = element_text(size=15))
+g2
+```
+
+```{r}
+ggsave("Dia24.png",plot=g2,units = 'mm',dpi=300)
+```
