@@ -1,0 +1,100 @@
+---
+title: "Dia 23"
+author: "Bioing. Agustin Solano"
+date: "03/06/2020"
+output: pdf_document
+---
+
+
+Levanto librerias necesarias
+```{r}
+if("dplyr" %in% (.packages())){
+          detach("package:dplyr", unload=TRUE) 
+          detach("package:plyr", unload=TRUE) 
+} 
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(png)
+library(grid)
+```
+
+```{r }
+datos = read.csv('VolcanesActivosArgentina.csv',na.strings = "", stringsAsFactors = T)
+str(datos)
+datos
+```
+
+```{r}
+datosProc = datos %>%
+  select(Region, Provincia,Denominación,Cota.m.) %>%
+  group_by(Provincia)
+datosProc
+
+primerNivel = datosProc %>%
+  summarise(cant_total_volc=length(Provincia)) %>%
+  summarise(cant_total_volc=sum(cant_total_volc))
+primerNivel 
+
+segundoNivel = datosProc %>%
+  group_by(Region) %>%
+  summarise(cant_volc_reg=n())
+segundoNivel
+
+segundoNivel_2 = segundoNivel %>%
+  mutate(reg=cumsum(cant_volc_reg),pos=reg-cant_volc_reg/2)
+segundoNivel_2
+
+tercerNivel = datosProc %>%
+  group_by(Region,Provincia) %>%
+  summarise(cant_volc_prov=n()) %>%
+  arrange(Region) %>%
+  ungroup(Region) %>%  select(-Region)
+tercerNivel
+
+tercerNivel_2 = tercerNivel %>%
+  mutate(prov=cumsum(cant_volc_prov),pos=prov-cant_volc_prov/2)
+tercerNivel_2
+```
+
+```{r}
+g1  = ggplot() +
+  geom_bar(data=primerNivel,aes(x=1,y=cant_total_volc),stat='identity') #+
+  #coord_polar('y')
+
+g1 + 
+  geom_bar(data=segundoNivel_2,aes(x=2,y=cant_volc_reg,fill=cant_volc_reg),color="white",
+           stat='identity',position="stack") +
+  geom_text(data=segundoNivel_2, aes(label=paste(Region,cant_volc_reg), x=2, y=pos)) +
+  coord_polar('y')
+```
+```{r}
+g1  = ggplot() +
+  geom_bar(data=primerNivel,aes(x=1,y=cant_total_volc),stat='identity',fill="indianred4") +
+  geom_text(data=primerNivel, aes(label=paste("Cant. Volcanes: ",cant_total_volc), x=1, y=cant_total_volc/2),
+            , fontface = "bold",size=4,color="seagreen2") 
+  #coord_polar('y')
+
+g1 + 
+  geom_bar(data=segundoNivel_2,aes(x=2,y=cant_volc_reg),color="white",fill="coral", #,fill=Region
+           stat='identity',position="stack") +
+  geom_text(data=segundoNivel_2, aes(label=paste(Region,": ",cant_volc_reg), x=2, y=pos),
+             fontface = "bold",size=4,color="seagreen4") +
+  
+  geom_bar(data=tercerNivel_2,aes(x=3,y=cant_volc_prov),color="white",fill="lightblue3", #,fill=Provincia
+           stat='identity',position="stack") +
+  geom_text(data=tercerNivel_2, aes(label=paste(Provincia,": ",cant_volc_prov), x=3, y=pos),
+             fontface = "bold",size=4,color="royalblue4") +
+  
+  coord_polar('y') +
+  theme_void()
+```
+
+
+```{r}
+ggsave("Dia23.png",plot=last_plot(),units = 'mm',dpi=300)
+```
+
+
+
