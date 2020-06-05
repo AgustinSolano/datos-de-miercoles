@@ -1,0 +1,63 @@
+---
+title: "Dia 10-11"
+author: "Bioing. Agustin Solano"
+date: "22/5/2020"
+output: pdf_document
+---
+
+
+Levanto librerias necesarias
+```{r}
+if("dplyr" %in% (.packages())){
+          detach("package:dplyr", unload=TRUE) 
+          detach("package:plyr", unload=TRUE) 
+} 
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(png)
+library(grid)
+library(forcats)
+
+source('R_rainclouds.R')
+```
+
+```{r }
+datos = read.csv('cannabis_strains.csv',na.strings = "")
+str(datos)
+```
+
+
+```{r}
+ggplot() +
+  #geom_point(data=datos,aes(x=Type,y=Rating,color=Type)) +
+  geom_flat_violin(data=datos,aes(x=Type,y=Rating,colour=Type,fill=Type))
+
+g2 = ggplot(datos,aes(x=Type,y=Rating,colour=Type,fill=Type))+ 
+  geom_flat_violin(position = position_nudge(x = .2, y = 0),adjust = .8,trim = F,color="black")+ 
+  geom_point(position = position_jitter(width = .15), size = .25)+ 
+  ylab('Score')+xlab('Group')+
+  theme_classic() +
+  scale_colour_manual(values=c("#059033","#93cB56","#355A20")) +
+  scale_fill_manual(values=c("#059033","#93cB56","#355A20")) +
+  scale_x_discrete(name="Cepa",labels=c("Hibrida","Indica","Sativa"))+
+  guides(fill=F,colour=F) +
+  xlab("Cepa") + ylab("Rating") +
+  labs(title = "Ratings de cepas de cannabis",
+              subtitle = "Calificaciones de usuarios",
+              caption = "@Aguchosolano") +
+  theme(text = element_text(size=15),
+        aspect.ratio = 1/1)
+
+g2
+```
+
+
+
+```{r}
+ggsave("Dia25.png",plot=g2,units = 'mm',dpi=300)
+```
+
+
+
