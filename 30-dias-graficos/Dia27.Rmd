@@ -1,0 +1,51 @@
+---
+title: "Dia 27"
+author: "Bioing. Agustin Solano"
+date: "07/06/2020"
+output: pdf_document
+---
+
+
+Levanto librerias necesarias
+```{r}
+if("dplyr" %in% (.packages())){
+          detach("package:dplyr", unload=TRUE) 
+          detach("package:plyr", unload=TRUE) 
+} 
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(png)
+library(grid)
+library(forcats)
+library(gganimate)
+library(gifski)
+```
+
+```{r }
+datos = read.table('ECG_Filt.txt',header = T,sep = "", dec=".") %>%
+  mutate(time = 1:length(datos$ecg))
+#datos = read.csv('cannabis_strains.csv',na.strings = "")
+str(datos)
+summary(datos)
+```
+
+```{r}
+g1 = ggplot(datos,aes(x=time,ecg)) +
+  geom_point(size=5,color="#E3242B") + 
+  geom_line(size=1, color="#710C04") +
+  theme_void()
+g1
+g2 = g1 +  transition_reveal(time) 
+```
+
+```{r}
+animate(g2, duration = 5, fps = 20, width = 400, height = 400, renderer = gifski_renderer())
+anim_save("ecg_animado.gif")
+```
+
+
+
+
+
