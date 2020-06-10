@@ -1,0 +1,124 @@
+---
+title: "Dia 30"
+author: "Bioing. Agustin Solano"
+date: "10/6/2020"
+output: pdf_document
+---
+
+librerias
+```{r}
+if("dplyr" %in% (.packages())){
+          detach("package:dplyr", unload=TRUE) 
+          detach("package:plyr", unload=TRUE) 
+} 
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(png)
+library(grid)
+library(hrbrthemes)
+```
+
+
+```{r }
+datos_frutas = read.csv('exportaciones-de-frutas-del-anio-2013-al-2017.csv',header=T, sep=',',stringsAsFactors = T)
+str(datos_frutas)
+datos_frutas
+```
+
+```{r }
+datos_uvas = read.csv('produccion-de-uvas-de-argentina-2012-2017.csv',header=T, sep=',',stringsAsFactors = T)
+str(datos_uvas)
+datos_uvas
+```
+
+```{r}
+datos_frutas_frut = datos_frutas %>%
+  group_by(producto,anio) %>%
+  summarise(toneladas=sum(totales_tn,na.rm=T),montoDolares=sum(totales_usd,na.rm=T))
+datos_frutas_frut
+```
+
+```{r}
+datos_uvas_prov = datos_uvas %>%
+  group_by(provincia_productora,anio_cosecha) %>%
+  summarise(quintales=sum(quintales_producidos,na.rm=T))
+datos_uvas_prov
+```
+
+```{r}
+ggplot(data=datos_uvas_prov,aes(x=provincia_productora,y=quintales)) +
+  geom_col(aes(fill=anio_cosecha)) +
+  coord_polar()
+
+g1 = ggplot(data=datos_uvas_prov,aes(x=provincia_productora,y=quintales,fill=as.factor(anio_cosecha),order=as.factor(anio_cosecha))) +
+  geom_bar(stat="identity",position="identity",width=1,color="black") +
+  scale_fill_manual(values=c("#EA993A","#A9461D","#2C7784","#8FCFC1","#E4DDB3","#A45A52"),name="Año") +
+  coord_polar() +
+  labs(x=NULL, y=NULL,
+       title="Producción de uvas por Provincia",
+       subtitle="Quintales totales 2012-2017",
+       caption="@Aguchosolano") + 
+  theme_ipsum_pub() +
+  xlab(NULL) +
+  theme( text = element_text(size=15),
+        aspect.ratio = 1)
+g1
+```
+
+```{r}
+g2 = ggplot(data=datos_frutas_frut,aes(x=producto,y=toneladas,fill=as.factor(anio),order=as.factor(anio))) +
+  geom_bar(stat="identity",position="identity",width=1, color="black") +
+  scale_fill_manual(values=c("#4599FE","#EE0405","#2D4046","#B8CAD1","white"),name="Año") +
+  coord_polar() +
+  theme_ipsum_pub() +
+  labs(x=NULL, y=NULL,
+       title="Exportación de futas",
+       subtitle="Toneladas totales 2013-2017",
+       caption="@Aguchosolano") + 
+  theme( text = element_text(size=15),
+        aspect.ratio = 1)
+  #facet_wrap(vars(anio))
+g2
+
+g3 = ggplot(data=datos_frutas_frut,aes(x=producto,y=montoDolares,fill=as.factor(anio),order=as.factor(anio))) +
+  geom_bar(stat="identity",position="identity",width=1, color="black") +
+  scale_fill_manual(values=c("#4599FE","#EE0405","#2D4046","#B8CAD1","white"),name="Año") +
+  coord_polar() +
+  theme_ipsum_pub() +
+  labs(x=NULL, y=NULL,
+       title="Exportación de futas",
+       subtitle="US$ totales 2013-2017",
+       caption="@Aguchosolano") + 
+  theme(text = element_text(size=15),
+        aspect.ratio = 1)
+  #facet_wrap(vars(anio))
+g3
+# ggplot(data=datos_frutas_frut,aes(x=producto,y=montoDolares,fill=as.factor(anio),order=as.factor(anio))) +
+#   geom_bar(stat="identity",position="identity",width=1) +
+#   scale_fill_linesaber(reverse = T)+#scale_fill_cyberpunk("laser")+
+#   coord_polar() +
+#   theme_cyberpunk()
+```
+
+
+```{r}
+ggsave("Dia30_2.png",plot=g2,units = 'mm',dpi=300)
+ggsave("Dia30_1.png",plot=g1,units = 'mm',dpi=300)
+ggsave("Dia30_3.png",plot=g3,units = 'mm',dpi=300)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
