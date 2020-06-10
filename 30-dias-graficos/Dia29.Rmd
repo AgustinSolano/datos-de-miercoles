@@ -1,0 +1,88 @@
+---
+title: "Dia 29"
+author: "Bioing. Agustin Solano"
+date: "09/6/2020"
+output: pdf_document
+---
+
+
+Levanto librerias necesarias
+```{r}
+if("dplyr" %in% (.packages())){
+          detach("package:dplyr", unload=TRUE) 
+          detach("package:plyr", unload=TRUE) 
+} 
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(png)
+library(grid)
+library(hrbrthemes)
+```
+
+```{r }
+datos = read.csv('shot_logs.csv',header=T, sep=',',stringsAsFactors = T)
+str(datos)
+datos %>% arrange(player_name)
+```
+
+```{r}
+datosFilt = datos %>%
+  filter(player_name=="stephen curry"|player_name=="lebron james"|player_name=="russell westbrook"|player_name=="james harden") %>%
+  select(GAME_ID,SHOT_DIST,SHOT_NUMBER,DRIBBLES,SHOT_RESULT,PTS,player_name) %>%
+  group_by(GAME_ID,player_name) %>%
+  summarise(distancia_media_part = mean(SHOT_DIST,na.rm=T),cant_tiros_part=max(SHOT_NUMBER,na.rm=T),
+            dribbles_media_part=mean(DRIBBLES,na.rm=T), porc_hit_part=100*mean(SHOT_RESULT=="made",na.rm=T),
+            cant_pts_part=sum(PTS,na.rm=T)) %>%
+  group_by(player_name) %>%
+  summarise(distancia_media = mean(distancia_media_part,na.rm=T),cant_tiros=mean(cant_tiros_part,na.rm=T),
+            dribbles_media=mean(dribbles_media_part,na.rm=T), porc_hit=mean(porc_hit_part,na.rm=T),
+            cant_pts=mean(cant_pts_part,na.rm=T))
+datosFilt
+```
+
+```{r}
+g1 = ggparcoord(datosFilt,
+    columns = 2:6, groupColumn =1,
+    showPoints = TRUE, 
+    alphaLines = 1,
+    scale = "std" #"globalminmax"# "uniminmax" # "std"
+    ) +
+  scale_color_manual(labels=c("James Harden","Lebron James","Russell Westbrook","Stephen Curry"),
+                       values=c("#E92EFB","#FF2079","#440BD4","#F9D1D1"),name=NULL) +
+  scale_x_discrete(labels=c("Dist. Shot","Shots","Dribbles","%hits","Pts")) +
+  labs(x=NULL, y="Media por partido (estandarizada)",
+       title="Desempeño de jugares destacados - NBA",
+       subtitle="Temporada regular 2014-2015",
+       caption="@Aguchosolano") + 
+  theme_ft_rc() +
+  theme(text=element_text(size=15))
+
+g1
+
+g2 = ggparcoord(datosFilt,
+    columns = 2:6, groupColumn =1,
+    showPoints = TRUE, 
+    alphaLines = 1,
+    scale = "globalminmax" #"globalminmax"# "uniminmax" # "std"
+    ) +
+  scale_color_manual(labels=c("James Harden","Lebron James","Russell Westbrook","Stephen Curry"),
+                       values=c("#E92EFB","#FF2079","#440BD4","#F9D1D1"),name=NULL) +
+  scale_x_discrete(labels=c("Dist. Shot","Shots","Dribbles","%hits","Pts")) +
+  labs(x=NULL, y="Media por partido (absoluta)",
+       title="Desempeño de jugares destacados - NBA",
+       subtitle="Temporada regular 2014-2015",
+       caption="@Aguchosolano") + 
+  theme_ft_rc() +
+  theme(text=element_text(size=15))
+
+g2
+```
+
+
+
+```{r}
+ggsave("Dia29_1.png",plot=g1,units = 'mm',dpi=300)
+ggsave("Dia29_2.png",plot=g2,units = 'mm',dpi=300)
+```
